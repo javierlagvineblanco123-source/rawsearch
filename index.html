@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RawSearch</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080808;--bg2:#0f0f0f;--bg3:#161616;--bg4:#1c1c1c;
+  --accent:#e8437a;--accent2:#ff6b9d;
+  --text:#f0ece8;--text2:#8a8078;--text3:#3a3530;
+  --border:rgba(240,236,232,0.07);--border2:rgba(240,236,232,0.13);
+  --r:12px;--rs:7px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:900;opacity:.4}
+
+/* ── HEADER ── */
+.header{padding:36px 20px 20px;text-align:center;position:relative}
+.header::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:500px;height:220px;background:radial-gradient(ellipse at top,rgba(232,67,122,.1),transparent 70%);pointer-events:none}
+.logo{font-family:'Syne',sans-serif;font-size:clamp(1.9rem,5.5vw,3.2rem);font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:4px;position:relative;z-index:1}
+.logo .r{color:var(--accent)}.logo .s{color:var(--text)}
+.sub{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:1px;margin-bottom:22px;position:relative;z-index:1}
+
+/* ── SEARCH ── */
+.search-wrap{max-width:540px;margin:0 auto 12px;position:relative;z-index:1}
+.si{width:100%;padding:14px 52px 14px 20px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:40px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+.si::placeholder{color:var(--text3)}
+.si:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,67,122,.1)}
+.sbtn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;background:var(--accent);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:15px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.sbtn:hover{background:var(--accent2);transform:translateY(-50%) scale(1.06)}
+
+/* ── TAGS ── */
+.tags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;max-width:560px;margin:0 auto 24px;position:relative;z-index:1}
+.tag{padding:4px 12px;background:var(--bg3);border:0.5px solid var(--border);border-radius:20px;font-size:11px;color:var(--text2);cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;white-space:nowrap}
+.tag:hover{border-color:var(--accent);color:var(--accent);background:rgba(232,67,122,.06)}
+.tag:active{transform:scale(.95)}
+
+/* ── FILTERS ── */
+.filters{max-width:1200px;margin:0 auto 14px;padding:0 14px;display:none;align-items:center;gap:6px;flex-wrap:wrap}
+.filters.show{display:flex}
+.flbl{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.fb{padding:4px 11px;background:transparent;border:0.5px solid var(--border);border-radius:20px;color:var(--text2);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.fb:hover{border-color:var(--border2);color:var(--text)}
+.fb.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sep{width:1px;height:14px;background:var(--border2)}
+.rcount{margin-left:auto;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+
+/* ── GRID ── */
+.grid{max-width:1200px;margin:0 auto;padding:0 10px 48px;columns:2;column-gap:8px}
+@media(min-width:480px){.grid{columns:3}}
+@media(min-width:720px){.grid{columns:4}}
+@media(min-width:1024px){.grid{columns:5}}
+@media(min-width:1280px){.grid{columns:6}}
+
+/* ── CARD ── */
+.card{break-inside:avoid;margin-bottom:8px;border-radius:var(--r);overflow:hidden;position:relative;cursor:pointer;background:var(--bg3);border:0.5px solid var(--border);transition:transform .2s,box-shadow .2s;animation:fu .3s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.5);border-color:var(--border2)}
+.card img{width:100%;display:block;object-fit:cover;background:var(--bg4)}
+.card video{width:100%;display:block;object-fit:cover;background:#000}
+.c-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85),transparent 55%);opacity:0;transition:opacity .2s;display:flex;align-items:flex-end;padding:10px}
+.card:hover .c-overlay{opacity:1}
+.c-title{font-size:10px;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);width:38px;height:38px;background:rgba(232,67,122,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s,transform .2s;color:#fff;font-size:13px}
+.card:hover .c-play{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.c-views{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.72);border-radius:3px;padding:1px 5px;font-size:9px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace}
+.c-hot{position:absolute;top:5px;left:5px;background:var(--accent);border-radius:3px;padding:1px 6px;font-size:9px;color:#fff;font-weight:600}
+.c-dur{position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,.72);border-radius:3px;padding:1px 5px;font-size:9px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace}
+
+/* ── LOADING ── */
+.loading{display:none;flex-direction:column;align-items:center;padding:60px 20px;gap:12px}
+.loading.on{display:flex}
+.ring{width:38px;height:38px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltxt{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace}
+
+/* ── EMPTY ── */
+.empty{display:none;flex-direction:column;align-items:center;padding:70px 20px;gap:10px;text-align:center}
+.empty.on{display:flex}
+.eico{font-size:36px;opacity:.2}
+.etitle{font-size:15px;font-weight:500}
+.esub{font-size:12px;color:var(--text2);max-width:320px;line-height:1.5}
+
+/* ── HOME CATEGORIES ── */
+.home{padding:0 12px 48px;max-width:900px;margin:0 auto}
+.home-title{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;text-align:center;margin-bottom:14px;letter-spacing:.5px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.cat{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--r);padding:16px 10px 12px;cursor:pointer;transition:all .15s;text-align:center}
+.cat:hover{border-color:var(--accent);background:rgba(232,67,122,.05);transform:translateY(-2px)}
+.cat-ico{font-size:20px;margin-bottom:6px}
+.cat-name{font-size:12px;font-weight:500;color:var(--text2)}
+.cat-tag{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px}
+
+/* ── MODAL ── */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:500;display:none;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(10px)}
+.mbg.on{display:flex}
+.modal{background:var(--bg2);border-radius:16px;border:0.5px solid var(--border2);max-width:720px;width:100%;overflow:hidden;animation:mIn .2s ease;max-height:90vh;display:flex;flex-direction:column}
+@keyframes mIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.mhead{padding:11px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.mtitle{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mclose{width:28px;height:28px;background:var(--bg3);border:0.5px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:12px;flex-shrink:0;transition:background .15s}
+.mclose:hover{background:var(--accent);color:#fff}
+.mvideo{background:#000;flex-shrink:0;position:relative;min-height:200px;display:flex;align-items:center;justify-content:center}
+.mvideo video{width:100%;max-height:55vh;display:block;outline:none;background:#000}
+.mvideo .loading-video{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#000}
+.mfooter{padding:10px 14px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;border-top:0.5px solid var(--border);flex-shrink:0}
+.mtag{padding:2px 8px;background:var(--bg3);border:0.5px solid var(--border);border-radius:8px;font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
+.mtag:hover{color:var(--accent);border-color:var(--accent)}
+.mopen{margin-left:auto;padding:6px 14px;background:var(--accent);border:none;border-radius:20px;color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.mopen:hover{background:var(--accent2)}
+
+/* ── LOAD MORE ── */
+.lmore{display:none;justify-content:center;padding:14px 14px 32px}
+.lmore.on{display:flex}
+.lmbtn{padding:10px 28px;background:transparent;border:0.5px solid var(--border2);border-radius:30px;color:var(--text2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.lmbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);border:0.5px solid var(--border2);border-radius:8px;padding:8px 16px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;z-index:800;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo"><span class="r">RAW</span><span class="s">SEARCH</span></div>
+  <div class="sub">// encuentra cualquier contenido, se reproduce aquí mismo</div>
+  <div class="search-wrap">
+    <input class="si" type="text" id="q" placeholder="escribe lo que quieres ver..." autocomplete="off" spellcheck="false">
+    <button class="sbtn" onclick="buscar()" aria-label="Buscar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+  </div>
+  <div class="tags">
+    <span class="tag" onclick="qs('twerk')">🍑 twerk</span>
+    <span class="tag" onclick="qs('cameltoe')">cameltoe</span>
+    <span class="tag" onclick="qs('voyeur')">voyeur</span>
+    <span class="tag" onclick="qs('pov')">POV</span>
+    <span class="tag" onclick="qs('lingerie')">lingerie</span>
+    <span class="tag" onclick="qs('latina')">🌶 latina</span>
+    <span class="tag" onclick="qs('milf')">milf</span>
+    <span class="tag" onclick="qs('bbw')">bbw</span>
+    <span class="tag" onclick="qs('gloryhole')">gloryhole</span>
+    <span class="tag" onclick="qs('cuckold')">cuckold</span>
+    <span class="tag" onclick="qs('solo')">solo</span>
+    <span class="tag" onclick="qs('amateur')">amateur</span>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters" id="filters">
+  <span class="flbl">orden:</span>
+  <button class="fb on" data-order="trending" onclick="setOrder(this)">trending</button>
+  <button class="fb" data-order="new" onclick="setOrder(this)">nuevos</button>
+  <button class="fb" data-order="top" onclick="setOrder(this)">más vistos</button>
+  <div class="sep"></div>
+  <span class="flbl">tipo:</span>
+  <button class="fb on" data-type="g" onclick="setType(this)">videos</button>
+  <button class="fb" data-type="i" onclick="setType(this)">imágenes</button>
+  <span class="rcount" id="rcount"></span>
+</div>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="ring"></div>
+  <div class="ltxt" id="ltxt">buscando...</div>
+</div>
+
+<!-- EMPTY -->
+<div class="empty" id="empty">
+  <div class="eico">◎</div>
+  <div class="etitle">Sin resultados</div>
+  <div class="esub">Intenta con otra palabra clave</div>
+</div>
+
+<!-- GRID -->
+<div class="grid" id="grid"></div>
+
+<!-- LOAD MORE -->
+<div class="lmore" id="lmore">
+  <button class="lmbtn" onclick="loadMore()">cargar más resultados</button>
+</div>
+
+<!-- HOME -->
+<div class="home" id="home">
+  <div class="home-title">// categorías populares — haz clic para ver</div>
+  <div class="cat-grid">
+    <div class="cat" onclick="qs('twerk')"><div class="cat-ico">🍑</div><div class="cat-name">Twerk</div><div class="cat-tag">trending</div></div>
+    <div class="cat" onclick="qs('pov')"><div class="cat-ico">📹</div><div class="cat-name">POV</div><div class="cat-tag">popular</div></div>
+    <div class="cat" onclick="qs('lingerie')"><div class="cat-ico">✨</div><div class="cat-name">Lingerie</div><div class="cat-tag">trending</div></div>
+    <div class="cat" onclick="qs('voyeur')"><div class="cat-ico">👁</div><div class="cat-name">Voyeur</div><div class="cat-tag">popular</div></div>
+    <div class="cat" onclick="qs('cameltoe')"><div class="cat-ico">🔥</div><div class="cat-name">Cameltoe</div><div class="cat-tag">hot</div></div>
+    <div class="cat" onclick="qs('latina')"><div class="cat-ico">🌶</div><div class="cat-name">Latina</div><div class="cat-tag">popular</div></div>
+    <div class="cat" onclick="qs('milf')"><div class="cat-ico">💋</div><div class="cat-name">MILF</div><div class="cat-tag">popular</div></div>
+    <div class="cat" onclick="qs('amateur')"><div class="cat-ico">📱</div><div class="cat-name">Amateur</div><div class="cat-tag">trending</div></div>
+    <div class="cat" onclick="qs('bbw')"><div class="cat-ico">🌊</div><div class="cat-name">BBW</div><div class="cat-tag">popular</div></div>
+    <div class="cat" onclick="qs('gloryhole')"><div class="cat-ico">⭕</div><div class="cat-name">Gloryhole</div><div class="cat-tag">niche</div></div>
+    <div class="cat" onclick="qs('cuckold')"><div class="cat-ico">👀</div><div class="cat-name">Cuckold</div><div class="cat-tag">niche</div></div>
+    <div class="cat" onclick="qs('solo girl')"><div class="cat-ico">🎭</div><div class="cat-name">Solo</div><div class="cat-tag">popular</div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="mbg" id="mbg" onclick="closeBg(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhead">
+      <div class="mtitle" id="mtitle">—</div>
+      <div class="mclose" onclick="closeModal()">✕</div>
+    </div>
+    <div class="mvideo" id="mvideo">
+      <div class="loading-video" id="vidLoading">
+        <div class="ring"></div>
+        <div class="ltxt">cargando video...</div>
+      </div>
+    </div>
+    <div class="mfooter" id="mfooter"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── ESTADO ───
+var ST = {
+  q: '', page: 1, order: 'trending', type: 'g',
+  token: null, tokenExp: 0, results: [], pages: 1
+};
+
+// ─── TOKEN TEMPORAL GRATUITO DE REDGIFS ───
+// RedGIFs da tokens temporales gratis sin cuenta ni API key
+// El truco: se pide desde el navegador usando no-cors o un proxy CORS público
+async function getToken() {
+  if (ST.token && Date.now() < ST.tokenExp) return ST.token;
+  try {
+    // Intentar directo primero
+    var r = await fetch('https://api.redgifs.com/v2/auth/temporary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    var d = await r.json();
+    ST.token = d.token;
+    ST.tokenExp = Date.now() + 50 * 60 * 1000;
+    return ST.token;
+  } catch(e) {
+    // Si falla por CORS usar proxy público
+    try {
+      var r2 = await fetch('https://corsproxy.io/?url=' +
+        encodeURIComponent('https://api.redgifs.com/v2/auth/temporary'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      var d2 = await r2.json();
+      // corsproxy devuelve el response directo
+      ST.token = d2.token || (d2.contents && JSON.parse(d2.contents).token);
+      ST.tokenExp = Date.now() + 50 * 60 * 1000;
+      return ST.token;
+    } catch(e2) {
+      return null;
+    }
+  }
+}
+
+// ─── BUSCAR ───
+async function buscar(append) {
+  var q = document.getElementById('q').value.trim();
+  if (!q) return;
+  if (!append) { ST.page = 1; ST.results = []; }
+  ST.q = q;
+
+  // UI
+  if (!append) {
+    document.getElementById('grid').innerHTML = '';
+    document.getElementById('home').style.display = 'none';
+    document.getElementById('lmore').classList.remove('on');
+    document.getElementById('empty').classList.remove('on');
+    document.getElementById('filters').classList.remove('show');
+  }
+  document.getElementById('loading').classList.add('on');
+  document.getElementById('ltxt').textContent = 'buscando "' + q + '"...';
+
+  var token = await getToken();
+  if (!token) { sinToken(q); return; }
+
+  var url = 'https://api.redgifs.com/v2/gifs/search' +
+    '?search_text=' + encodeURIComponent(q) +
+    '&order=' + ST.order +
+    '&count=40' +
+    '&page=' + ST.page +
+    '&type=' + ST.type;
+
+  try {
+    var headers = { 'Authorization': 'Bearer ' + token };
+    var resp;
+
+    // Intentar directo
+    try {
+      resp = await fetch(url, { headers: headers });
+    } catch(corsErr) {
+      // Fallback con proxy CORS público gratuito
+      resp = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url), {
+        headers: headers
+      });
+    }
+
+    var data = await resp.json();
+    document.getElementById('loading').classList.remove('on');
+
+    var gifs = data.gifs || [];
+    if (!gifs.length && ST.page === 1) {
+      document.getElementById('empty').classList.add('on');
+      return;
+    }
+
+    ST.results = append ? ST.results.concat(gifs) : gifs;
+    ST.pages = data.pages || 1;
+    renderGrid(gifs, append);
+    document.getElementById('filters').classList.add('show');
+    document.getElementById('rcount').textContent =
+      Math.min(ST.pages * 40, 1000).toLocaleString() + '+ resultados';
+    document.getElementById('lmore').classList[ST.page < ST.pages ? 'add' : 'remove']('on');
+
+  } catch(e) {
+    document.getElementById('loading').classList.remove('on');
+    sinToken(q);
+  }
+}
+
+// ─── SIN TOKEN — fallback visual ───
+function sinToken(q) {
+  // Mostrar cards de demo con link directo a RedGIFs
+  document.getElementById('loading').classList.remove('on');
+  document.getElementById('home').style.display = 'none';
+
+  var grid = document.getElementById('grid');
+  if (ST.page === 1) grid.innerHTML = '';
+
+  // Crear 20 cards de placeholder que abren RedGIFs al hacer clic
+  for (var i = 0; i < 20; i++) {
+    var seed = q.replace(/\s+/g,'') + i;
+    var div = document.createElement('div');
+    div.className = 'card';
+    div.style.animationDelay = (i * 0.04) + 's';
+    // Placeholder con imagen aleatoria relacionada
+    var w = [300,300,400][i%3], h = [500,400,300][i%3];
+    div.innerHTML =
+      '<img src="https://picsum.photos/seed/'+seed+'/'+w+'/'+h+'" ' +
+      'alt="'+q+'" loading="lazy" style="aspect-ratio:'+w+'/'+h+'">' +
+      '<div class="c-overlay"><div class="c-title">' + q + ' #' + (i+1) + '</div></div>' +
+      '<div class="c-play">▶</div>' +
+      '<div class="c-hot">DEMO</div>';
+    var url = 'https://www.redgifs.com/gifs/search?query=' + encodeURIComponent(q);
+    div.addEventListener('click', function(u){ return function(){ window.open(u,'_blank'); }; }(url));
+    grid.appendChild(div);
+  }
+
+  document.getElementById('filters').classList.add('show');
+  toast('⚠ Token temporalmente no disponible — haz clic en cualquier video para verlo en RedGIFs');
+}
+
+// ─── RENDER GRID ───
+function renderGrid(gifs, append) {
+  var grid = document.getElementById('grid');
+  if (!append) grid.innerHTML = '';
+  gifs.forEach(function(gif, i) {
+    grid.appendChild(makeCard(gif, i));
+  });
+}
+
+function makeCard(gif, i) {
+  var div = document.createElement('div');
+  div.className = 'card';
+  div.style.animationDelay = ((i % 20) * 0.04) + 's';
+
+  var thumb = (gif.urls && (gif.urls.thumbnail || gif.urls.poster || gif.urls.sd)) || '';
+  var tags = gif.tags || [];
+  var views = gif.views ? fmtN(gif.views) : '';
+  var dur = gif.duration ? Math.round(gif.duration) + 's' : '';
+  var isHot = gif.views > 200000;
+
+  // Detectar ratio
+  var isWide = gif.width > gif.height;
+  var ratio = isWide ? '16/9' : '9/16';
+
+  div.innerHTML =
+    '<img src="' + esc(thumb) + '" alt="' + esc(tags[0] || 'video') + '" loading="lazy" ' +
+    'style="aspect-ratio:' + ratio + '" ' +
+    'onerror="this.style.aspectRatio=\'1\';this.style.minHeight=\'80px\';this.style.background=\'var(--bg4)\'">' +
+    '<div class="c-overlay"><div class="c-title">' + esc(tags.slice(0, 3).join(' · ')) + '</div></div>' +
+    '<div class="c-play">▶</div>' +
+    (views ? '<div class="c-views">' + views + '</div>' : '') +
+    (dur ? '<div class="c-dur">' + dur + '</div>' : '') +
+    (isHot ? '<div class="c-hot">HOT</div>' : '');
+
+  div.addEventListener('click', function() { openModal(gif); });
+  return div;
+}
+
+// ─── MODAL + VIDEO ───
+async function openModal(gif) {
+  var tags = gif.tags || [];
+  var title = tags.slice(0, 4).join(' · ') || 'video';
+  var id = gif.id || '';
+  var redUrl = 'https://www.redgifs.com/watch/' + id;
+
+  document.getElementById('mtitle').textContent = title;
+  document.getElementById('mbg').classList.add('on');
+  document.body.style.overflow = 'hidden';
+
+  var mv = document.getElementById('mvideo');
+  var vl = document.getElementById('vidLoading');
+  vl.style.display = 'flex';
+
+  // Intentar cargar el MP4 directo desde la API
+  try {
+    var token = await getToken();
+    if (token) {
+      var r;
+      try {
+        r = await fetch('https://api.redgifs.com/v2/gifs/' + id, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      } catch(e) {
+        r = await fetch('https://corsproxy.io/?url=' +
+          encodeURIComponent('https://api.redgifs.com/v2/gifs/' + id), {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      }
+      var data = await r.json();
+      var g = data.gif || {};
+      var videoUrl = (g.urls && (g.urls.hd || g.urls.sd)) || (gif.urls && gif.urls.sd);
+
+      if (videoUrl) {
+        vl.style.display = 'none';
+        mv.innerHTML =
+          '<video src="' + videoUrl + '" controls autoplay loop playsinline muted ' +
+          'style="width:100%;max-height:55vh;background:#000" ' +
+          'oncanplay="this.muted=false" ' +
+          'onerror="this.parentElement.innerHTML=\'<div style=\\\"padding:30px;text-align:center;color:var(--text2);font-size:13px\\\">Video no disponible directamente — <a href=\\\"' + redUrl + '\\\" target=\\\"_blank\\\" style=\\\"color:var(--accent)\\\">ver en RedGIFs</a></div>\'"></video>';
+      } else {
+        throw new Error('no url');
+      }
+    } else {
+      throw new Error('no token');
+    }
+  } catch(e) {
+    // Fallback: embed iframe de RedGIFs
+    vl.style.display = 'none';
+    mv.innerHTML =
+      '<iframe src="https://www.redgifs.com/ifr/' + id + '?autoplay=1" ' +
+      'allow="autoplay;fullscreen" allowfullscreen ' +
+      'style="width:100%;height:420px;border:none;display:block"></iframe>';
+  }
+
+  // Footer con tags + botón
+  var mf = document.getElementById('mfooter');
+  mf.innerHTML = '';
+  tags.slice(0, 6).forEach(function(t) {
+    var s = document.createElement('span');
+    s.className = 'mtag'; s.textContent = '#' + t;
+    s.onclick = function() { qs(t); closeModal(); };
+    mf.appendChild(s);
+  });
+  var btn = document.createElement('a');
+  btn.className = 'mopen';
+  btn.href = redUrl; btn.target = '_blank';
+  btn.innerHTML = '&#9654; Ver en RedGIFs';
+  mf.appendChild(btn);
+}
+
+function closeBg(e) { if (e.target === document.getElementById('mbg')) closeModal(); }
+function closeModal() {
+  document.getElementById('mbg').classList.remove('on');
+  document.getElementById('mvideo').innerHTML =
+    '<div class="loading-video" id="vidLoading"><div class="ring"></div>' +
+    '<div class="ltxt">cargando video...</div></div>';
+  document.body.style.overflow = '';
+}
+
+// ─── CONTROLES ───
+function qs(tag) { document.getElementById('q').value = tag; buscar(); }
+function loadMore() { ST.page++; buscar(true); }
+
+function setOrder(btn) {
+  ST.order = btn.dataset.order;
+  document.querySelectorAll('[data-order]').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  buscar();
+}
+function setType(btn) {
+  ST.type = btn.dataset.type;
+  document.querySelectorAll('[data-type]').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  buscar();
+}
+
+// ─── UTILS ───
+function fmtN(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return n;
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(function() { t.classList.remove('on'); }, 4000);
+}
+
+// ─── ENTER ───
+document.getElementById('q').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') buscar();
+});
+</script>
+</body>
+</html>
